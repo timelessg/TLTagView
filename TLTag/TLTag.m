@@ -30,7 +30,7 @@
     {
         self.tags = [tags mutableCopy];
         self.mode = mode;
-        [self setupTags];
+        [self initTagsView];
     }
     return self;
 }
@@ -40,16 +40,15 @@
     {
         self.tags = [tags mutableCopy];
         self.mode = mode;
-        [self setupTags];
+        [self initTagsView];
     }
     return self;
 }
--(void)setupTags
+-(void)initTagsView
 {
     self.tagViews = [@[] mutableCopy];
     UIView *lastTagView = nil;
     CGFloat tagsWidth = 0;
-    CGFloat tagsHeight = 0;
     NSUInteger lineCount = 0;
     NSUInteger tmpLineCount = 0;
     BOOL isBreak = NO;
@@ -62,11 +61,12 @@
                 if (isBreak)
                 {
                     make.left.equalTo(self.mas_left).offset(0);
+                    make.top.equalTo(lastTagView.mas_bottom).offset(5);
                 }else
                 {
                     make.left.equalTo(lastTagView.mas_right).offset(5);
+                    make.top.equalTo(lastTagView.mas_top).offset(0);
                 }
-                make.top.equalTo(self.mas_top).offset((lineCount) * (tagsHeight + 5));
             }else
             {
                 make.left.equalTo(self.mas_left).offset(0);
@@ -75,7 +75,6 @@
         }];
         [tagView layoutIfNeeded];
         tagsWidth += tagView.bounds.size.width + 5;
-        tagsHeight = tagView.bounds.size.height;
         if (self.frame.size.width < tagsWidth)
         {
             lineCount = (NSUInteger)tagsWidth / self.frame.size.width;
@@ -174,11 +173,9 @@
 -(void)insterTagWith:(NSString *)tag
 {
     UIView *lastView = [self getLastTagView];
-    UIView *tagView = [self tagWithText:tag];
+    
+    UIView *tagView  = [self tagWithText:tag];
     [self addSubview:tagView];
-    [tagView mas_updateConstraints:^(MASConstraintMaker *make) {
-        
-    }];
     [tagView mas_makeConstraints:^(MASConstraintMaker *make) {
         if (lastView) {
             make.left.equalTo(lastView.mas_right).offset(5);
