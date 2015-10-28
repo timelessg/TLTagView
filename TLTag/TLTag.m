@@ -115,11 +115,9 @@
         self.enterTextfield.backward = ^(){
             if ([weakSelf.enterTextfield.text isEqualToString:@""])
             {
-                UIView *lastTagView = [weakSelf getLastTagView];
-                if (lastTagView) {
-                    weakSelf.selectedTagView.backgroundColor = [UIColor redColor];
-                }
-                weakSelf.selectedTagView = [weakSelf getLastTagView];
+                [[weakSelf getLastTagView] removeFromSuperview];
+                [weakSelf.tagViews removeLastObject];
+                [weakSelf reLayoutTextField];
             }
         };
         self.enterTextfield.didReturn = ^(NSString *text){
@@ -178,6 +176,9 @@
     UIView *lastView = [self getLastTagView];
     UIView *tagView = [self tagWithText:tag];
     [self addSubview:tagView];
+    [tagView mas_updateConstraints:^(MASConstraintMaker *make) {
+        
+    }];
     [tagView mas_makeConstraints:^(MASConstraintMaker *make) {
         if (lastView) {
             make.left.equalTo(lastView.mas_right).offset(5);
