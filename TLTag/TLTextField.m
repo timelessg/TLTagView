@@ -16,6 +16,7 @@
 -(instancetype)init{
     if (self = [super init]) {
         self.delegate = self;
+        [self addTarget:self action:@selector(textFieldDidChange:) forControlEvents:UIControlEventEditingChanged];
     }
     return self;
 }
@@ -27,5 +28,9 @@
 {
     if (self.didReturn) self.didReturn(textField.text);
     return YES;
+}
+- (void) textFieldDidChange:(UITextField *) TextField
+{
+    if (self.didEditing) self.didEditing();
 }
 @end

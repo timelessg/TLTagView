@@ -11,4 +11,5 @@
 @interface TLTextField : UITextField
 @property (nonatomic, copy) void (^backward)(void);
 @property (nonatomic, copy) void (^didReturn)(NSString *text);
+@property (nonatomic, copy) void (^didEditing)(void);
 @end
