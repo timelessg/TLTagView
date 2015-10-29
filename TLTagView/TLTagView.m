@@ -6,21 +6,24 @@
 //  Copyright © 2015年 FAN LING. All rights reserved.
 //
 
-#import "TLTag.h"
+#import "TLTagView.h"
 #import <Masonry.h>
 #import "TLTextField.h"
 
 #define WS(weakSelf)  __weak __typeof(&*self)weakSelf = self;
 
-@interface TLTag ()
-@property(nonatomic,strong)NSMutableArray *tags;
-@property(nonatomic,strong)NSMutableArray *tagButtons;
-@property(nonatomic,assign)TLTagMode mode;
+@interface TLTagView ()
+@property(nonatomic, strong)NSMutableArray *tags;
+@property(nonatomic, strong)NSMutableArray *tagButtons;
+@property(nonatomic, assign)TLTagMode      mode;
 
-@property(nonatomic,strong)TLTextField *enterTextfield;
+@property(nonatomic, strong)TLTextField    *enterTextfield;
+@property(nonatomic, strong)UIScrollView   *tagScrollView;
+
+@property(nonatomic, strong)void (^textFieldMasConstraintMaker)(MASConstraintMaker *);
 @end
 
-@implementation TLTag
+@implementation TLTagView
 
 
 -(instancetype)initWithTags:(NSArray *)tags mode:(TLTagMode)mode
@@ -45,7 +48,6 @@
 }
 -(void)initTagsView
 {
-    self.tagButtons = [@[] mutableCopy];
     UIButton *lastTagButton = nil;
     CGFloat tagsWidth = 0;
     NSUInteger lineCount = 0;
@@ -53,60 +55,59 @@
     BOOL isBreak = NO;
     for (int i = 0; i < self.tags.count; i ++) {
         UIButton *tagButton = [self tagButtonWithText:self.tags[i]];
-        [self addSubview:tagButton];
-        [tagButton mas_makeConstraints:^(MASConstraintMaker *make) {
-            if (lastTagButton)
-            {
-                if (isBreak)
+        if (self.mode == TLTagModeMultiLine) {
+            [self addSubview:tagButton];
+            [tagButton mas_makeConstraints:^(MASConstraintMaker *make) {
+                if (lastTagButton)
                 {
-                    make.left.equalTo(self.mas_left).offset(0);
-                    make.top.equalTo(lastTagButton.mas_bottom).offset(5);
+                    if (isBreak)
+                    {
+                        make.left.equalTo(self.mas_left).offset(0);
+                        make.top.equalTo(lastTagButton.mas_bottom).offset(5);
+                    }else
+                    {
+                        make.left.equalTo(lastTagButton.mas_right).offset(5);
+                        make.top.equalTo(lastTagButton.mas_top).offset(0);
+                    }
                 }else
                 {
-                    make.left.equalTo(lastTagButton.mas_right).offset(5);
-                    make.top.equalTo(lastTagButton.mas_top).offset(0);
+                    make.left.equalTo(self.mas_left).offset(0);
+                    make.top.equalTo(self.mas_top).offset(0);
                 }
-            }else
+            }];
+            [tagButton layoutIfNeeded];
+            tagsWidth += tagButton.bounds.size.width + 5;
+            if (self.frame.size.width < tagsWidth)
             {
-                make.left.equalTo(self.mas_left).offset(0);
-                make.top.equalTo(self.mas_top).offset(0);
+                lineCount = (NSUInteger)tagsWidth / self.frame.size.width;
+                if (tmpLineCount != lineCount)
+                {
+                    tmpLineCount = lineCount;
+                    isBreak = YES;
+                }else
+                {
+                    isBreak = NO;
+                }
             }
-        }];
-        [tagButton layoutIfNeeded];
-        tagsWidth += tagButton.bounds.size.width + 5;
-        if (self.frame.size.width < tagsWidth)
-        {
-            lineCount = (NSUInteger)tagsWidth / self.frame.size.width;
-            if (tmpLineCount != lineCount)
-            {
-                tmpLineCount = lineCount;
-                isBreak = YES;
-            }else
-            {
-                isBreak = NO;
-            }
+        }
+        if (self.mode == TLTagModeSingleLine) {
+            [self addSubview:self.tagScrollView];
+            [self.tagScrollView addSubview:tagButton];
+            [tagButton mas_makeConstraints:^(MASConstraintMaker *make) {
+                if (lastTagButton) {
+                    if (i == self.tags.count - 1) {
+                        make.right.equalTo(self.tagScrollView.mas_right).offset(0);
+                    }
+                    make.left.equalTo(lastTagButton.mas_right).offset(5);
+                    make.centerY.equalTo(lastTagButton.mas_centerY).offset(0);
+                }else{
+                    make.left.equalTo(self.tagScrollView.mas_left).offset(0);
+                    make.top.equalTo(self.tagScrollView.mas_top).offset(0);
+                }
+            }];
         }
         lastTagButton = tagButton;
         [self.tagButtons addObject:tagButton];
-    }
-    if (self.mode == TLTagModeEdit)
-    {
-        [self addSubview:self.enterTextfield];
-        [self.enterTextfield mas_makeConstraints:^(MASConstraintMaker *make)
-         {
-             if (lastTagButton)
-             {
-                 make.left.mas_equalTo(lastTagButton.mas_right).offset(5);
-                 make.top.mas_equalTo(lastTagButton.mas_top).offset(0);
-                 make.height.equalTo(lastTagButton.mas_height);
-             }else
-             {
-                 make.left.equalTo(self.mas_left).offset(0);
-                 make.top.equalTo(self.mas_top).offset(0);
-                 make.height.mas_equalTo(@30);
-             }
-             make.width.mas_equalTo(self.frame.size.width / 2);
-         }];
     }
 }
 -(UIButton *)tagButtonWithText:(NSString *)text
@@ -123,21 +124,7 @@
 }
 -(void)reLayoutTextField
 {
-    UIButton *lastTagButton = [self getLastTagButton];
-    [self.enterTextfield mas_remakeConstraints:^(MASConstraintMaker *make) {
-        if (lastTagButton)
-        {
-            make.left.mas_equalTo(lastTagButton.mas_right).offset(5);
-            make.top.mas_equalTo(lastTagButton.mas_top).offset(0);
-            make.height.equalTo(lastTagButton.mas_height);
-        }else
-        {
-            make.left.equalTo(self.mas_left).offset(0);
-            make.top.equalTo(self.mas_top).offset(0);
-            make.height.mas_equalTo(@30);
-        }
-        make.width.mas_equalTo(self.frame.size.width / 2);
-    }];
+    [self.enterTextfield mas_remakeConstraints:self.textFieldMasConstraintMaker];
 }
 -(void)clickTag:(UIButton *)sender
 {
@@ -207,7 +194,48 @@
     }
     return _enterTextfield;
 }
--(UIButton *)getLastTagButton{
+-(UIScrollView *)tagScrollView
+{
+    if (!_tagScrollView)
+    {
+        self.tagScrollView = [[UIScrollView alloc] initWithFrame:self.frame];
+        self.tagScrollView.autoresizesSubviews = YES;
+        self.tagScrollView.showsHorizontalScrollIndicator = NO;
+    }
+    return _tagScrollView;
+}
+-(UIButton *)getLastTagButton
+{
     return [self.tagButtons lastObject];
+}
+-(void)setCanEdit:(BOOL)canEdit
+{
+    CGFloat tagButtonHeight = [@"啊啊" sizeWithAttributes:@{NSFontAttributeName:[UIFont systemFontOfSize:12]}].height;
+    if ((self.mode == TLTagModeMultiLine) && canEdit) {
+        [self addSubview:self.enterTextfield];
+        WS(weakSelf);
+        self.textFieldMasConstraintMaker = ^(MASConstraintMaker *make){
+            UIButton *lastTagButton = [weakSelf getLastTagButton];
+            if (lastTagButton)
+            {
+                make.left.mas_equalTo(lastTagButton.mas_right).offset(5);
+                make.top.mas_equalTo(lastTagButton.mas_top).offset(0);
+                make.height.equalTo(lastTagButton.mas_height);
+            }else
+            {
+                make.left.equalTo(weakSelf.mas_left).offset(0);
+                make.top.equalTo(weakSelf.mas_top).offset(0);
+                make.height.mas_equalTo(tagButtonHeight);
+            }
+            make.width.mas_equalTo(self.frame.size.width / 2);
+        };
+        [self.enterTextfield mas_makeConstraints:self.textFieldMasConstraintMaker];
+    }
+}
+-(NSMutableArray *)tagButtons{
+    if (!_tagButtons) {
+        _tagButtons = [@[] mutableCopy];
+    }
+    return _tagButtons;
 }
 @end
