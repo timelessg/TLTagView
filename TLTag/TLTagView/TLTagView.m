@@ -162,6 +162,7 @@
     CGFloat lastTagOffsetX = lastTagButton.bounds.size.width + lastTagButton.frame.origin.x + 5;
     
     UIButton *tagButton = [[TLButton alloc] initWithTag:tag];
+    [tagButton addTarget:self action:@selector(clickTag:) forControlEvents:UIControlEventTouchUpInside];
     [self addSubview:tagButton];
     [tagButton mas_makeConstraints:^(MASConstraintMaker *make) {
         if (lastTagOffsetX + tagButtonWidth > self.frame.size.width) {
@@ -248,19 +249,19 @@
         [self reLayoutTextField];
     }
 }
+-(TLButton *)getLastTagButton
+{
+    return [self.tagButtons lastObject];
+}
 -(UIScrollView *)tagScrollView
 {
     if (!_tagScrollView)
     {
-        self.tagScrollView = [[UIScrollView alloc] initWithFrame:self.frame];
-        self.tagScrollView.autoresizesSubviews = YES;
-        self.tagScrollView.showsHorizontalScrollIndicator = NO;
+        _tagScrollView = [[UIScrollView alloc] initWithFrame:self.frame];
+        _tagScrollView.autoresizesSubviews = YES;
+        _tagScrollView.showsHorizontalScrollIndicator = NO;
     }
     return _tagScrollView;
-}
--(TLButton *)getLastTagButton
-{
-    return [self.tagButtons lastObject];
 }
 -(void)setCanEdit:(BOOL)canEdit
 {
