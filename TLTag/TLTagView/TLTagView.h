@@ -21,6 +21,9 @@ typedef NS_ENUM(NSUInteger,TLTagMode){
 
 @interface TLTagView : UIView
 @property (nonatomic, assign) BOOL           canEdit;
+//空格添加Tag
+@property (nonatomic, assign) BOOL           canBlankInsertTag;
+
 @property (nonatomic, strong) TLTextField    *enterTextfield;
 @property (nonatomic, strong) NSMutableArray *tags;
 
@@ -28,7 +31,6 @@ typedef NS_ENUM(NSUInteger,TLTagMode){
 -(instancetype)initWithFrame:(CGRect)frame tags:(NSArray *)tags mode:(TLTagMode)mode;
 
 -(void)insterTag:(NSString *)tag;
--(void)removeTag:(NSString *)tag;
 //点击回调
 @property(nonatomic,copy)void (^didClickTag)(NSString *);
 @end

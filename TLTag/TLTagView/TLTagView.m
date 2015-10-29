@@ -10,7 +10,8 @@
 #import <Masonry.h>
 
 #define WS(weakSelf)         __weak __typeof(&*self)weakSelf = self;
-#define TLTAGFONT           [UIFont systemFontOfSize:12]
+//自定义
+#define TLTAGFONT           [UIFont systemFontOfSize:14]
 #define TLTAGBGCOLOR        [UIColor blackColor]
 #define TLTAGTEXTCOLOR      [UIColor whiteColor]
 #define TLTAGSELECTEDCOLOR  [UIColor redColor]
@@ -18,32 +19,36 @@
 #define TLTAGEDGEINSETS     UIEdgeInsetsMake(1, 5, 1, 5)
 
 @implementation TLButton
--(instancetype)initWithTag:(NSString *)tag{
-    if (self = [super init]) {
+-(instancetype)initWithTag:(NSString *)tag
+{
+    if (self = [super init])
+    {
         self.contentEdgeInsets = TLTAGEDGEINSETS;
         [self setBackgroundColor:TLTAGBGCOLOR];
         self.titleLabel.font = TLTAGFONT;
         [self setTitle:tag forState:UIControlStateNormal];
         [self setTitleColor:TLTAGTEXTCOLOR forState:UIControlStateNormal];
         self.layer.masksToBounds = YES;
-        self.layer.cornerRadius = TLTAGCORNERRADIUS;
+        self.layer.cornerRadius  = TLTAGCORNERRADIUS;
     }
     return self;
+}
+-(void)setSelected:(BOOL)selected{
+    [super setSelected:selected];
+    self.backgroundColor = selected ? TLTAGSELECTEDCOLOR : TLTAGBGCOLOR;
 }
 @end
 
 @interface TLTagView ()
-@property (nonatomic, strong) NSMutableArray *tagButtons;
-@property (nonatomic, assign) TLTagMode      mode;
+@property (nonatomic, strong)     NSMutableArray *tagButtons;
+@property (nonatomic, assign)     TLTagMode      mode;
 
-@property (nonatomic, strong) UIScrollView   *tagScrollView;
-
-@property(nonatomic, strong)void (^textFieldMasConstraintMaker)(MASConstraintMaker *);
+@property (nonatomic, strong)     UIScrollView   *tagScrollView;
+@property (nonatomic, strong)     UIButton *selectedButton;
+@property (nonatomic, strong)void (^textFieldMasConstraintMaker)(MASConstraintMaker *);
 @end
 
 @implementation TLTagView
-
-
 -(instancetype)initWithTags:(NSArray *)tags mode:(TLTagMode)mode
 {
     if (self = [super init])
@@ -71,10 +76,12 @@
     NSUInteger lineCount = 0;
     NSUInteger tmpLineCount = 0;
     BOOL isBreak = NO;
-    for (int i = 0; i < self.tags.count; i ++) {
+    for (int i = 0; i < self.tags.count; i ++)
+    {
         TLButton *tagButton = [[TLButton alloc] initWithTag:self.tags[i]];
         [tagButton addTarget:self action:@selector(clickTag:) forControlEvents:UIControlEventTouchUpInside];
-        if (self.mode == TLTagModeMultiLine) {
+        if (self.mode == TLTagModeMultiLine)
+        {
             [self addSubview:tagButton];
             [tagButton mas_makeConstraints:^(MASConstraintMaker *make) {
                 if (lastTagButton)
@@ -109,17 +116,20 @@
                 }
             }
         }
-        if (self.mode == TLTagModeSingleLine) {
+        if (self.mode == TLTagModeSingleLine)
+        {
             [self addSubview:self.tagScrollView];
             [self.tagScrollView addSubview:tagButton];
             [tagButton mas_makeConstraints:^(MASConstraintMaker *make) {
-                if (lastTagButton) {
+                if (lastTagButton)
+                {
                     if (i == self.tags.count - 1) {
                         make.right.equalTo(self.tagScrollView.mas_right).offset(0);
                     }
                     make.left.equalTo(lastTagButton.mas_right).offset(5);
                     make.centerY.equalTo(lastTagButton.mas_centerY).offset(0);
-                }else{
+                }else
+                {
                     make.left.equalTo(self.tagScrollView.mas_left).offset(0);
                     make.top.equalTo(self.tagScrollView.mas_top).offset(0);
                 }
@@ -137,7 +147,8 @@
 {
     if (self.canEdit)
     {
-        
+        _selectedButton = sender;
+        sender.selected = YES;
     }else
     {
         if (self.didClickTag) self.didClickTag(sender.titleLabel.text);
@@ -156,7 +167,8 @@
         if (lastTagOffsetX + tagButtonWidth > self.frame.size.width) {
             make.left.equalTo(self.mas_left).offset(0);
             make.top.equalTo(lastTagButton.mas_bottom).offset(5);
-        }else{
+        }else
+        {
             if (lastTagButton) {
                 make.left.equalTo(lastTagButton.mas_right).offset(5);
                 make.top.equalTo(lastTagButton.mas_top).offset(0);
@@ -170,10 +182,14 @@
     [self.tagButtons addObject:tagButton];
     [self reLayoutTextField];
 }
--(void)removeTag:(NSString *)tag{
-    
+-(void)removeTagWitgIndex:(NSUInteger)index
+{
+    [self.tagButtons[index] removeFromSuperview];
+    [self.tagButtons removeObjectAtIndex:index];
+    [self reLayoutTextField];
 }
--(TLTextField *)enterTextfield{
+-(TLTextField *)enterTextfield
+{
     if (!_enterTextfield)
     {
         self.enterTextfield = [[TLTextField alloc] init];
@@ -183,16 +199,11 @@
         {
             if ([weakSelf.enterTextfield.text isEqualToString:@""])
             {
-                UIButton *lastTagButton = [weakSelf getLastTagButton];
-                if (lastTagButton.selected)
-                {
-                    [[weakSelf getLastTagButton] removeFromSuperview];
-                    [weakSelf.tagButtons removeLastObject];
-                    [weakSelf reLayoutTextField];
-                }else
-                {
-                    [lastTagButton setBackgroundColor:TLTAGSELECTEDCOLOR];
-                    lastTagButton.selected = YES;
+                if (weakSelf.selectedButton.selected) {
+                    [weakSelf removeTag];
+                }else{
+                    weakSelf.selectedButton = [weakSelf getLastTagButton];
+                    weakSelf.selectedButton.selected = YES;
                 }
             }
         };
@@ -210,6 +221,33 @@
     }
     return _enterTextfield;
 }
+-(void)removeTag{
+    if (_selectedButton)
+    {
+        NSUInteger index = [self.tagButtons indexOfObject:_selectedButton];
+        if (index == 0 && self.tagButtons.count != 1) {
+            TLButton *nextButton = self.tagButtons[index + 1];
+            [nextButton mas_remakeConstraints:^(MASConstraintMaker *make) {
+                make.left.equalTo(self.mas_left).offset(0);
+                make.top.equalTo(self.mas_top).offset(0);
+            }];
+        }else if (index == self.tagButtons.count - 1){
+            
+        }else{
+            TLButton *nextButton = self.tagButtons[index + 1];
+            TLButton *lastButton = self.tagButtons[index - 1];
+            [nextButton mas_remakeConstraints:^(MASConstraintMaker *make) {
+                make.left.equalTo(lastButton.mas_right).offset(5);
+                make.top.equalTo(lastButton.mas_top).offset(0);
+            }];
+        }
+
+        [_selectedButton removeFromSuperview];
+        [self.tagButtons removeObject:_selectedButton];
+        _selectedButton = nil;
+        [self reLayoutTextField];
+    }
+}
 -(UIScrollView *)tagScrollView
 {
     if (!_tagScrollView)
@@ -220,17 +258,20 @@
     }
     return _tagScrollView;
 }
--(UIButton *)getLastTagButton
+-(TLButton *)getLastTagButton
 {
     return [self.tagButtons lastObject];
 }
 -(void)setCanEdit:(BOOL)canEdit
 {
+    _canEdit = canEdit;
     CGFloat tagButtonHeight = [@"" sizeWithAttributes:@{NSFontAttributeName:TLTAGFONT}].height;
-    if ((self.mode == TLTagModeMultiLine) && canEdit) {
+    if ((self.mode == TLTagModeMultiLine) && canEdit)
+    {
         [self addSubview:self.enterTextfield];
         WS(weakSelf);
-        self.textFieldMasConstraintMaker = ^(MASConstraintMaker *make){
+        self.textFieldMasConstraintMaker = ^(MASConstraintMaker *make)
+        {
             UIButton *lastTagButton = [weakSelf getLastTagButton];
             if (lastTagButton)
             {
@@ -248,8 +289,19 @@
         [self.enterTextfield mas_makeConstraints:self.textFieldMasConstraintMaker];
     }
 }
--(NSMutableArray *)tagButtons{
-    if (!_tagButtons) {
+-(void)setCanBlankInsertTag:(BOOL)canBlankInsertTag
+{
+    _canBlankInsertTag = canBlankInsertTag;
+    WS(weakSelf);
+    self.enterTextfield.didEnterBlank = ^(NSString *text)
+    {
+        [weakSelf insterTag:text];
+    };
+}
+-(NSMutableArray *)tagButtons
+{
+    if (!_tagButtons)
+    {
         _tagButtons = [@[] mutableCopy];
     }
     return _tagButtons;

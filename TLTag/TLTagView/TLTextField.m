@@ -17,6 +17,7 @@
     if (self = [super init]) {
         self.delegate = self;
         [self addTarget:self action:@selector(textFieldDidChange:) forControlEvents:UIControlEventEditingChanged];
+        [self addTarget:self action:@selector(textField:shouldChangeCharactersInRange:replacementString:) forControlEvents:UIControlEventEditingChanged];
     }
     return self;
 }
@@ -32,5 +33,13 @@
 - (void) textFieldDidChange:(UITextField *) TextField
 {
     if (self.didEditing) self.didEditing();
+}
+-(BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
+    textField.tintColor = [UIColor blackColor];
+    if ([string isEqualToString:@" "]) {
+        NSString *text = [textField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+        if (self.didEnterBlank) self.didEnterBlank(text);
+    }
+    return YES;
 }
 @end
