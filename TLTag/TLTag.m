@@ -173,14 +173,20 @@
 -(void)insterTagWith:(NSString *)tag
 {
     UIView *lastView = [self getLastTagView];
+    [lastView layoutIfNeeded];
+    CGFloat offsetX = lastView.frame.origin.x + lastView.bounds.size.width + 5;
     
     UIView *tagView  = [self tagWithText:tag];
+    
     [self addSubview:tagView];
-    [tagView mas_makeConstraints:^(MASConstraintMaker *make) {
-        if (lastView) {
+    [tagView mas_makeConstraints:^(MASConstraintMaker *make)
+    {
+        if (lastView)
+        {
             make.left.equalTo(lastView.mas_right).offset(5);
             make.centerY.equalTo(lastView.mas_centerY).offset(0);
-        }else{
+        }else
+        {
             make.left.equalTo(self.mas_left).offset(0);
             make.top.equalTo(self.mas_top).offset(0);
         }
