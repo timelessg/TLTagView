@@ -10,13 +10,23 @@
 #import <Masonry.h>
 
 #define WS(weakSelf)         __weak __typeof(&*self)weakSelf = self;
-//自定义
+//标签文本字体
 #define TLTAGFONT           [UIFont systemFontOfSize:14]
+//标签背景色
 #define TLTAGBGCOLOR        [UIColor blackColor]
+//标签文本颜色
 #define TLTAGTEXTCOLOR      [UIColor whiteColor]
-#define TLTAGSELECTEDCOLOR  [UIColor redColor]
+//标签选中状态背景色
+#define TLTAGSELECTEDCOLOR  [UIColor grayColor]
+//标签Button圆角
 #define TLTAGCORNERRADIUS   5.0f
+//标签Button内边距
 #define TLTAGEDGEINSETS     UIEdgeInsetsMake(1, 5, 1, 5)
+
+//行间距
+#define TLLINESPACE         5
+//标签左右间距
+#define TLINSETS            5
 
 @implementation TLButton
 -(instancetype)initWithTag:(NSString *)tag
@@ -45,6 +55,7 @@
 
 @property (nonatomic, strong)     UIScrollView   *tagScrollView;
 @property (nonatomic, strong)     UIButton *selectedButton;
+//textfield布局
 @property (nonatomic, strong)void (^textFieldMas)(MASConstraintMaker *);
 @end
 
@@ -89,10 +100,10 @@
                     if (isBreak)
                     {
                         make.left.equalTo(self.mas_left).offset(0);
-                        make.top.equalTo(lastTagButton.mas_bottom).offset(5);
+                        make.top.equalTo(lastTagButton.mas_bottom).offset(TLLINESPACE);
                     }else
                     {
-                        make.left.equalTo(lastTagButton.mas_right).offset(5);
+                        make.left.equalTo(lastTagButton.mas_right).offset(TLINSETS);
                         make.top.equalTo(lastTagButton.mas_top).offset(0);
                     }
                 }else
@@ -102,7 +113,7 @@
                 }
             }];
             [tagButton layoutIfNeeded];
-            tagsWidth += tagButton.bounds.size.width + 5;
+            tagsWidth += tagButton.bounds.size.width + TLINSETS;
             if (self.frame.size.width < tagsWidth)
             {
                 lineCount = (NSUInteger)tagsWidth / self.frame.size.width;
@@ -160,8 +171,8 @@
     if ([tag isEqualToString:@""]) return;
     UIButton *lastTagButton = [self getLastTagButton];
     [lastTagButton layoutIfNeeded];
-    CGFloat tagButtonWidth = [tag sizeWithAttributes:@{NSFontAttributeName:TLTAGFONT}].width + 10;
-    CGFloat lastTagOffsetX = lastTagButton.bounds.size.width + lastTagButton.frame.origin.x + 5;
+    CGFloat tagButtonWidth = [tag sizeWithAttributes:@{NSFontAttributeName:TLTAGFONT}].width + TLINSETS * 2;
+    CGFloat lastTagOffsetX = lastTagButton.bounds.size.width + lastTagButton.frame.origin.x + TLINSETS;
     
     UIButton *tagButton = [[TLButton alloc] initWithTag:tag];
     [tagButton addTarget:self action:@selector(clickTag:) forControlEvents:UIControlEventTouchUpInside];
@@ -169,11 +180,11 @@
     [tagButton mas_makeConstraints:^(MASConstraintMaker *make) {
         if (lastTagOffsetX + tagButtonWidth > self.frame.size.width) {
             make.left.equalTo(self.mas_left).offset(0);
-            make.top.equalTo(lastTagButton.mas_bottom).offset(5);
+            make.top.equalTo(lastTagButton.mas_bottom).offset(TLLINESPACE);
         }else
         {
             if (lastTagButton) {
-                make.left.equalTo(lastTagButton.mas_right).offset(5);
+                make.left.equalTo(lastTagButton.mas_right).offset(TLINSETS);
                 make.top.equalTo(lastTagButton.mas_top).offset(0);
             }else{
                 make.left.equalTo(self.mas_left).offset(0);
@@ -182,13 +193,8 @@
         }
     }];
     self.enterTextfield.text = nil;
+    [self.tags addObject:tag];
     [self.tagButtons addObject:tagButton];
-    [self reLayoutTextField];
-}
--(void)removeTagWitgIndex:(NSUInteger)index
-{
-    [self.tagButtons[index] removeFromSuperview];
-    [self.tagButtons removeObjectAtIndex:index];
     [self reLayoutTextField];
 }
 -(TLTextField *)enterTextfield
@@ -256,15 +262,16 @@
             [nextButton mas_remakeConstraints:^(MASConstraintMaker *make) {
                 if (self.frame.size.width < nextButtonOffsetX + lastButtonWidth) {
                     make.left.equalTo(self.mas_left).offset(0);
-                    make.top.equalTo(lastButton.mas_bottom).offset(5);
+                    make.top.equalTo(lastButton.mas_bottom).offset(TLLINESPACE);
                 }else{
-                    make.left.equalTo(lastButton.mas_right).offset(5);
+                    make.left.equalTo(lastButton.mas_right).offset(TLINSETS);
                     make.top.equalTo(lastButton.mas_top).offset(0);
                 }
             }];
         }
         [_selectedButton removeFromSuperview];
         [self.tagButtons removeObject:_selectedButton];
+        [self.tags removeObject:_selectedButton.titleLabel.text];
         _selectedButton = nil;
         [self reLayoutTextField];
     }
@@ -302,7 +309,7 @@
             UIButton *lastTagButton = [weakSelf getLastTagButton];
             if (lastTagButton)
             {
-                make.left.mas_equalTo(lastTagButton.mas_right).offset(5);
+                make.left.mas_equalTo(lastTagButton.mas_right).offset(TLINSETS);
                 make.top.mas_equalTo(lastTagButton.mas_top).offset(0);
                 make.height.equalTo(lastTagButton.mas_height);
             }else
