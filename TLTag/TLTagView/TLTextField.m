@@ -35,11 +35,12 @@
     if (self.didEditing) self.didEditing();
 }
 -(BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
-    textField.tintColor = [UIColor blackColor];
-    if ([string isEqualToString:@" "]) {
-        NSString *text = [textField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
-        if (self.didEnterBlank) self.didEnterBlank(text);
+    if ([string isEqualToString:@" "] && [textField.text isEqualToString:@" "])
+    {
+        textField.text = nil;
+        return NO;
     }
+    if (self.didEnterBlank) self.didEnterBlank(string,textField.text);
     return YES;
 }
 @end

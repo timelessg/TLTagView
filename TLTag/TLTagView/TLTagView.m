@@ -45,7 +45,7 @@
 
 @property (nonatomic, strong)     UIScrollView   *tagScrollView;
 @property (nonatomic, strong)     UIButton *selectedButton;
-@property (nonatomic, strong)void (^textFieldMasConstraintMaker)(MASConstraintMaker *);
+@property (nonatomic, strong)void (^textFieldMas)(MASConstraintMaker *);
 @end
 
 @implementation TLTagView
@@ -141,12 +141,13 @@
 }
 -(void)reLayoutTextField
 {
-    [self.enterTextfield mas_remakeConstraints:self.textFieldMasConstraintMaker];
+    [self.enterTextfield mas_remakeConstraints:self.textFieldMas];
 }
 -(void)clickTag:(UIButton *)sender
 {
     if (self.canEdit)
     {
+        _selectedButton.selected = NO;
         _selectedButton = sender;
         sender.selected = YES;
     }else
@@ -156,6 +157,7 @@
 }
 -(void)insterTag:(NSString *)tag
 {
+    if ([tag isEqualToString:@""]) return;
     UIButton *lastTagButton = [self getLastTagButton];
     [lastTagButton layoutIfNeeded];
     CGFloat tagButtonWidth = [tag sizeWithAttributes:@{NSFontAttributeName:TLTAGFONT}].width + 10;
@@ -179,7 +181,7 @@
             }
         }
     }];
-    self.enterTextfield.text = @"";
+    self.enterTextfield.text = nil;
     [self.tagButtons addObject:tagButton];
     [self reLayoutTextField];
 }
@@ -218,6 +220,16 @@
             lastTagButton.selected = NO;
             [lastTagButton setBackgroundColor:TLTAGBGCOLOR];
         };
+        self.enterTextfield.didEnterBlank = ^(NSString *editingText,NSString *text)
+        {
+            if (weakSelf.canBlankInsertTag) {
+                if ([editingText isEqualToString:@" "]) {
+                    [weakSelf insterTag:[text stringByReplacingOccurrencesOfString:@" " withString:@""]];
+                }
+            }
+            weakSelf.selectedButton.selected = NO;
+            weakSelf.selectedButton = nil;
+        };
         return _enterTextfield;
     }
     return _enterTextfield;
@@ -237,12 +249,20 @@
         }else{
             TLButton *nextButton = self.tagButtons[index + 1];
             TLButton *lastButton = self.tagButtons[index - 1];
+            [nextButton layoutIfNeeded];
+            [lastButton layoutIfNeeded];
+            CGFloat nextButtonOffsetX = nextButton.frame.origin.x + nextButton.frame.size.width;
+            CGFloat lastButtonWidth = lastButton.frame.size.width;
             [nextButton mas_remakeConstraints:^(MASConstraintMaker *make) {
-                make.left.equalTo(lastButton.mas_right).offset(5);
-                make.top.equalTo(lastButton.mas_top).offset(0);
+                if (self.frame.size.width < nextButtonOffsetX + lastButtonWidth) {
+                    make.left.equalTo(self.mas_left).offset(0);
+                    make.top.equalTo(lastButton.mas_bottom).offset(5);
+                }else{
+                    make.left.equalTo(lastButton.mas_right).offset(5);
+                    make.top.equalTo(lastButton.mas_top).offset(0);
+                }
             }];
         }
-
         [_selectedButton removeFromSuperview];
         [self.tagButtons removeObject:_selectedButton];
         _selectedButton = nil;
@@ -266,13 +286,19 @@
 -(void)setCanEdit:(BOOL)canEdit
 {
     _canEdit = canEdit;
-    CGFloat tagButtonHeight = [@"" sizeWithAttributes:@{NSFontAttributeName:TLTAGFONT}].height;
     if ((self.mode == TLTagModeMultiLine) && canEdit)
     {
         [self addSubview:self.enterTextfield];
+
+        [self.enterTextfield mas_makeConstraints:self.textFieldMas];
+    }
+}
+-(void (^)(MASConstraintMaker *))textFieldMas{
+    if (!_textFieldMas) {
         WS(weakSelf);
-        self.textFieldMasConstraintMaker = ^(MASConstraintMaker *make)
+        _textFieldMas = ^(MASConstraintMaker *make)
         {
+            CGFloat tagButtonHeight = [@"" sizeWithAttributes:@{NSFontAttributeName:TLTAGFONT}].height;
             UIButton *lastTagButton = [weakSelf getLastTagButton];
             if (lastTagButton)
             {
@@ -287,17 +313,12 @@
             }
             make.width.mas_equalTo(self.frame.size.width / 2);
         };
-        [self.enterTextfield mas_makeConstraints:self.textFieldMasConstraintMaker];
     }
+    return _textFieldMas;
 }
 -(void)setCanBlankInsertTag:(BOOL)canBlankInsertTag
 {
     _canBlankInsertTag = canBlankInsertTag;
-    WS(weakSelf);
-    self.enterTextfield.didEnterBlank = ^(NSString *text)
-    {
-        [weakSelf insterTag:text];
-    };
 }
 -(NSMutableArray *)tagButtons
 {
