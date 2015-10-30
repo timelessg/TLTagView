@@ -9,7 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "TLTextField.h"
 
-
 typedef NS_ENUM(NSUInteger,TLTagMode){
     TLTagModeMultiLine = 1,
     TLTagModeSingleLine,
@@ -20,6 +19,7 @@ typedef NS_ENUM(NSUInteger,TLTagMode){
 @end
 
 @interface TLTagView : UIView
+//目前仅多行模式支持编辑
 @property (nonatomic, assign) BOOL           canEdit;
 //空格添加Tag
 @property (nonatomic, assign) BOOL           canBlankInsertTag;
@@ -28,7 +28,7 @@ typedef NS_ENUM(NSUInteger,TLTagMode){
 @property (nonatomic, strong) NSMutableArray *tags;
 
 -(instancetype)initWithTags:(NSArray *)tags mode:(TLTagMode)mode;
--(instancetype)initWithFrame:(CGRect)frame tags:(NSArray *)tags mode:(TLTagMode)mode;
+-(instancetype)initWithFrame:(CGRect)frame  tags:(NSArray *)tags mode:(TLTagMode)mode;
 
 -(void)insterTag:(NSString *)tag;
 //点击回调

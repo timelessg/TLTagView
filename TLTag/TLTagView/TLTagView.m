@@ -18,6 +18,8 @@
 #define TLTAGTEXTCOLOR      [UIColor whiteColor]
 //标签选中状态背景色
 #define TLTAGSELECTEDCOLOR  [UIColor grayColor]
+//标签Button边框颜色
+#define TLTAGBOARDCOLOR     [UIColor grayColor]
 //标签Button圆角
 #define TLTAGCORNERRADIUS   5.0f
 //标签Button内边距
@@ -40,6 +42,8 @@
         [self setTitleColor:TLTAGTEXTCOLOR forState:UIControlStateNormal];
         self.layer.masksToBounds = YES;
         self.layer.cornerRadius  = TLTAGCORNERRADIUS;
+        [self.layer setBorderWidth:1.0];
+        [self.layer setBorderColor:TLTAGBOARDCOLOR.CGColor];
     }
     return self;
 }
@@ -156,7 +160,7 @@
 }
 -(void)clickTag:(UIButton *)sender
 {
-    if (self.canEdit)
+    if (self.canEdit && self.mode == TLTagModeMultiLine)
     {
         _selectedButton.selected = NO;
         _selectedButton = sender;
@@ -298,6 +302,9 @@
         [self addSubview:self.enterTextfield];
 
         [self.enterTextfield mas_makeConstraints:self.textFieldMas];
+    }
+    if ((self.mode == TLTagModeSingleLine) && canEdit) {
+        
     }
 }
 -(void (^)(MASConstraintMaker *))textFieldMas{
