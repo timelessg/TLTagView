@@ -1,9 +1,9 @@
 //
 //  AppDelegate.m
-//  TLTag
+//  TLTagView
 //
-//  Created by Garry on 15/10/28.
-//  Copyright © 2015年 FAN LING. All rights reserved.
+//  Created by 郭锐 on 15/12/17.
+//  Copyright © 2015年 Garry. All rights reserved.
 //
 
 #import "AppDelegate.h"
@@ -17,10 +17,11 @@
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    self.window =[[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    self.window.backgroundColor = [UIColor whiteColor];
     ViewController *vc = [ViewController new];
     self.window.rootViewController = vc;
-    self.window.backgroundColor = [UIColor whiteColor];
+    
     [self.window makeKeyAndVisible];
     return YES;
 }

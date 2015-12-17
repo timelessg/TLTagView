@@ -1,9 +1,9 @@
 //
-//  SKTextField.m
-//  TuShou
+//  TLTextField.m
+//  TLTagView
 //
-//  Created by Garry on 15/6/22.
-//  Copyright (c) 2015年 LifeFun. All rights reserved.
+//  Created by 郭锐 on 15/12/17.
+//  Copyright © 2015年 Garry. All rights reserved.
 //
 
 #import "TLTextField.h"
@@ -30,9 +30,9 @@
     if (self.didReturn) self.didReturn(textField.text);
     return YES;
 }
-- (void) textFieldDidChange:(UITextField *) TextField
+- (void) textFieldDidChange:(UITextField *)TextField
 {
-    if (self.didEditing) self.didEditing();
+    if (self.didEditing) self.didEditing(TextField);
 }
 -(BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
     if ([string isEqualToString:@" "] && [textField.text isEqualToString:@" "])
