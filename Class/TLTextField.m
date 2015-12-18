@@ -7,6 +7,7 @@
 //
 
 #import "TLTextField.h"
+#import "TLTagView.h"
 
 @interface TLTextField () <UITextFieldDelegate>
 
@@ -28,11 +29,13 @@
 -(BOOL)textFieldShouldReturn:(UITextField *)textField
 {
     if (self.didReturn) self.didReturn(textField.text);
+    textField.text = @"";
     return YES;
 }
-- (void) textFieldDidChange:(UITextField *)TextField
+- (void)textFieldDidChange:(UITextField *)TextField
 {
-    if (self.didEditing) self.didEditing(TextField);
+    [self invalidateIntrinsicContentSize];
+    if (self.didEditing) self.didEditing();
 }
 -(BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
     if ([string isEqualToString:@" "] && [textField.text isEqualToString:@" "])
