@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "TLTextField.h"
 
 typedef NS_ENUM(NSUInteger,TLTagType) {
     TLTagTypeSingleLine,
@@ -47,6 +48,7 @@ typedef void(^DidClickTag)(NSUInteger );
 @property(nonatomic,assign)CGFloat lineSpacing;
 @property(nonatomic,assign)CGFloat itemSpacing;
 @property(nonatomic,assign)CGFloat maxLayoutWidth;
+@property(nonatomic,strong)TLTextField *inputTagTextField;
 
 @property(nonatomic,assign)BOOL canEdit;
 

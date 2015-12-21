@@ -8,7 +8,6 @@
 
 #import "TLTagView.h"
 #import "UIColor+Hex.h"
-#import "TLTextField.h"
 #import <Masonry.h>
 
 #define kTLTextFieldWith 100
@@ -47,6 +46,11 @@
         self.layer.cornerRadius = _tlTag.tagCornerRadius;
         self.enabled = _tlTag.enable;
         self.contentEdgeInsets = UIEdgeInsetsMake(2, 5, 2, 5);
+        [self setContentHuggingPriority:UILayoutPriorityRequired
+                                forAxis:UILayoutConstraintAxisHorizontal];
+        [self setContentCompressionResistancePriority:UILayoutPriorityRequired
+                                              forAxis:UILayoutConstraintAxisHorizontal];
+        
     }
     return self;
 }
@@ -56,7 +60,6 @@
 @end
 
 @interface TLTagView ()
-@property(nonatomic,strong)TLTextField *inputTagTextField;
 @property(nonatomic,strong)NSMutableArray *tagConstraints;
 @property(nonatomic,strong)NSMutableArray *tagArray;
 
@@ -106,7 +109,6 @@
         for (UIView *subview in self.subviews) {
             CGFloat subview_width = subview.intrinsicContentSize.width;
             CGFloat subview_height = subview.intrinsicContentSize.height;
-            //            if ([subview isKindOfClass:[TLTagButton class]]) {
             if (lastView) {
                 if (self.padding.left + subview_width >= self.maxLayoutWidth) {
                     lineCount ++ ;
@@ -121,7 +123,6 @@
                 currentX += subview_width;
             }
             lastView = subview;
-            //            }
         }
         totalHeight += self.padding.bottom + (lineCount - 1) * self.lineSpacing;
         totalWidth = (lineCount >= 1) ? self.maxLayoutWidth : MIN(self.maxLayoutWidth, totalWidth);
@@ -142,9 +143,6 @@
     if (_isDidSetup) {
         return;
     }
-    //    if (!self.tagArray.count) {
-    //        return;
-    //    }
     
     for (MASConstraint *constranit in self.tagConstraints) {
         [constranit uninstall];
@@ -159,7 +157,6 @@
         NSLog(@"%@",self.subviews);
         for (UIView *subview in self.subviews) {
             CGFloat subview_width = subview.intrinsicContentSize.width;
-//            CGFloat subview_height = subview.intrinsicContentSize.height;
             
             NSLog(@"%@",[NSValue valueWithCGSize:subview.intrinsicContentSize]);
             [subview mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -167,7 +164,7 @@
             }];
             if (_lastTag) {
                 if ([subview isKindOfClass:[TLTagButton class]]) {
-                    if (currentX + subview_width + self.padding.right + 50 > self.maxLayoutWidth) {
+                    if (currentX + subview_width + self.padding.right > self.maxLayoutWidth) {
                         [subview mas_makeConstraints:^(MASConstraintMaker *make) {
                             SMAS(make.leading.equalTo(self.mas_leading).offset(self.padding.left));
                             SMAS(make.top.equalTo(_lastTag.mas_bottom).offset(self.lineSpacing));
@@ -185,7 +182,6 @@
                         SMAS(make.centerY.equalTo([self lastTag].mas_centerY).offset(0));
                         SMAS(make.left.equalTo([self lastTag].mas_right).offset(self.itemSpacing));
                         SMAS(make.bottom.equalTo(self.mas_bottom).with.offset(-self.padding.bottom));
-                        SMAS(make.size.mas_lessThanOrEqualTo(self.maxLayoutWidth - currentX - [self lastTag].intrinsicContentSize.width));
                         SMAS(make.height.mas_equalTo(21));
                     }];
                 }
@@ -194,7 +190,6 @@
                     [subview mas_makeConstraints:^(MASConstraintMaker *make) {
                         SMAS(make.leading.equalTo(self.mas_leading).offset(self.padding.left));
                         SMAS(make.top.equalTo(self.mas_top).offset(self.padding.top));
-                        SMAS(make.width.mas_equalTo(subview_width));
                     }];
                     currentX += subview_width;
                 }else{
@@ -290,6 +285,10 @@
         _inputTagTextField = [[TLTextField alloc] init];
         _inputTagTextField.bounds = CGRectMake(0, 0, 100, 30);
         _inputTagTextField.font = [UIFont systemFontOfSize:14];
+        [_inputTagTextField setContentHuggingPriority:UILayoutPriorityRequired
+                                              forAxis:UILayoutConstraintAxisHorizontal];
+        [_inputTagTextField setContentCompressionResistancePriority:UILayoutPriorityDefaultLow
+                                                            forAxis:UILayoutConstraintAxisHorizontal];
         //return键 get
         _inputTagTextField.didReturn = ^(NSString *text){
             if (![text isEqualToString:@""]) {
@@ -313,6 +312,11 @@
     return _inputTagTextField;
 }
 -(NSArray *)getAllTagByText:(BOOL)byText{
+    NSString *tfText = self.inputTagTextField.text;
+    if (![tfText isEqualToString:@""]) {
+        [self insertTag:[TLTag tag:tfText]];
+        self.inputTagTextField.text = @"";
+    }
     NSMutableArray *allTags = [NSMutableArray array];
     for (UIView *view in self.subviews) {
         if ([view isKindOfClass:[TLTagButton class]]) {
