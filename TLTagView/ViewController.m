@@ -18,7 +18,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    TLTagView *view = [[TLTagView alloc] initWithTags:@[[TLTag tag:@"啊啊啊啊啊"],[TLTag tag:@"啊啊啊啊"],[TLTag tag:@"啊啊啊"],[TLTag tag:@"啊啊啊"],[TLTag tag:@"啊啊啊啊"],[TLTag tag:@"啊啊啊"],[TLTag tag:@"啊啊啊"],[TLTag tag:@"啊啊"]] Type:TLTagTypeMultiLine didClickTag:^(NSUInteger index) {
+    TLTagView *view = [[TLTagView alloc] initWithTags:nil Type:TLTagTypeMultiLine didClickTag:^(NSUInteger index) {
         
     }];
     view.padding = UIEdgeInsetsMake(5, 5, 5, 5);

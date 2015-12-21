@@ -37,7 +37,7 @@ typedef void(^DidClickTag)(NSUInteger );
 @end
 
 @interface TLTagButton : UIButton
-@property(nonatomic,copy)void (^didClick)(TLTagButton *);
+@property(nonatomic,strong)TLTag *tlTag;
 -(instancetype)initWithTag:(TLTag *)tag;
 +(instancetype)buttonWithTag:(TLTag *)tag;
 @end
@@ -52,5 +52,9 @@ typedef void(^DidClickTag)(NSUInteger );
 
 //这里可以传TLTag && String && nil
 -(instancetype)initWithTags:(NSArray *)tags Type:(TLTagType)type didClickTag:(DidClickTag)block;
+//插入tag
 -(void)insertTag:(TLTag *)tag;
+//byText：YES 返回一个字符串数组
+//byText：NO 返回一个TLTag数组
+-(NSArray *)getAllTagByText:(BOOL)byText;
 @end

@@ -13,7 +13,7 @@
 
 #define kTLTextFieldWith 100
 
-#define ADDOBJ(x) [self.tagConstraints addObject:x]
+#define SMAS(x) [self.tagConstraints addObject:x]
 
 @implementation TLTag
 +(instancetype)tag:(NSString *)text{
@@ -23,39 +23,35 @@
     tag.tagBackgroundSelectedColor = [UIColor colorWithHex:0xFFAF9D83];
     tag.tagNormalColor = [UIColor colorWithHex:0xFF333333];
     tag.tagSelectedColor = [UIColor colorWithHex:0xFFFFFFFF];
+    tag.tagFont = [UIFont systemFontOfSize:14];
+    tag.tagCornerRadius = 8.0f;
     tag.enable = YES;
     return tag;
 }
 @end
 
 @implementation TLTagButton
-{
-    TLTag *_tag;
-}
+
 -(instancetype)initWithTag:(TLTag *)tag{
     if (self = [super init]) {
-        _tag = tag;
+        _tlTag = tag;
         self.backgroundColor = tag.tagBackgroundNormalColor;
-        [self setTitleColor:_tag.tagNormalColor forState:UIControlStateNormal];
-        [self setTitleColor:_tag.tagSelectedColor forState:UIControlStateSelected];
-        if (_tag.tagBgImageNamed) [self setBackgroundImage:[UIImage imageNamed:_tag.tagBgImageNamed] forState:UIControlStateNormal];
-        [self setTitle:_tag.tag forState:UIControlStateNormal];
-        self.layer.borderColor = _tag.tagBorderColor.CGColor;
-        self.layer.borderWidth = _tag.tagBorderWidth;
-        self.titleLabel.font = _tag.tagFont;
-        self.enabled = _tag.enable;
-        [self addTarget:self action:@selector(didClick:) forControlEvents:UIControlEventTouchUpInside];
+        if (_tlTag.tagBgImageNamed) [self setBackgroundImage:[UIImage imageNamed:_tlTag.tagBgImageNamed] forState:UIControlStateNormal];
+        [self setTitle:_tlTag.tag forState:UIControlStateNormal];
+        [self setTitleColor:_tlTag.tagNormalColor forState:UIControlStateNormal];
+        [self setTitleColor:_tlTag.tagSelectedColor  forState:UIControlStateSelected];
+        self.layer.borderColor = _tlTag.tagBorderColor.CGColor;
+        self.layer.borderWidth = _tlTag.tagBorderWidth;
+        self.titleLabel.font = _tlTag.tagFont;
+        self.layer.masksToBounds = YES;
+        self.layer.cornerRadius = _tlTag.tagCornerRadius;
+        self.enabled = _tlTag.enable;
+        self.contentEdgeInsets = UIEdgeInsetsMake(2, 5, 2, 5);
     }
     return self;
 }
 +(instancetype)buttonWithTag:(TLTag *)tag{
     return [[TLTagButton alloc] initWithTag:tag];
-}
--(void)didClick:(TLTagButton *)sender{
-    if (self.didClick){
-        self.backgroundColor = sender.selected ? _tag.tagBackgroundNormalColor : _tag.tagBackgroundSelectedColor;
-        self.didClick(sender);
-    }
 }
 @end
 
@@ -90,6 +86,7 @@
             [self addTag:tag];
         }
         [self addSubview:self.inputTagTextField];
+        [self.inputTagTextField becomeFirstResponder];
     }
     return self;
 }
@@ -109,22 +106,22 @@
         for (UIView *subview in self.subviews) {
             CGFloat subview_width = subview.intrinsicContentSize.width;
             CGFloat subview_height = subview.intrinsicContentSize.height;
-//            if ([subview isKindOfClass:[TLTagButton class]]) {
-                if (lastView) {
-                    if (self.padding.left + subview_width >= self.maxLayoutWidth) {
-                        lineCount ++ ;
-                        currentX = self.padding.left;
-                        totalHeight += subview_height;
-                    }else{
-                        currentX += subview_width;
-                    }
-                }else{
+            //            if ([subview isKindOfClass:[TLTagButton class]]) {
+            if (lastView) {
+                if (self.padding.left + subview_width >= self.maxLayoutWidth) {
                     lineCount ++ ;
+                    currentX = self.padding.left;
                     totalHeight += subview_height;
+                }else{
                     currentX += subview_width;
                 }
-                lastView = subview;
-//            }
+            }else{
+                lineCount ++ ;
+                totalHeight += subview_height;
+                currentX += subview_width;
+            }
+            lastView = subview;
+            //            }
         }
         totalHeight += self.padding.bottom + (lineCount - 1) * self.lineSpacing;
         totalWidth = (lineCount >= 1) ? self.maxLayoutWidth : MIN(self.maxLayoutWidth, totalWidth);
@@ -141,13 +138,14 @@
 //重新布局
 -(void)updateConstraints{
     [super updateConstraints];
-
+    
     if (_isDidSetup) {
         return;
     }
-    if (!self.tagArray.count) {
-        return;
-    }
+    //    if (!self.tagArray.count) {
+    //        return;
+    //    }
+    
     for (MASConstraint *constranit in self.tagConstraints) {
         [constranit uninstall];
     }
@@ -161,63 +159,49 @@
         NSLog(@"%@",self.subviews);
         for (UIView *subview in self.subviews) {
             CGFloat subview_width = subview.intrinsicContentSize.width;
-            CGFloat subview_height = subview.intrinsicContentSize.height;
+//            CGFloat subview_height = subview.intrinsicContentSize.height;
             
             NSLog(@"%@",[NSValue valueWithCGSize:subview.intrinsicContentSize]);
             [subview mas_makeConstraints:^(MASConstraintMaker *make) {
-                ADDOBJ(make.trailing.lessThanOrEqualTo(self.mas_trailing).offset(-self.padding.right));
+                SMAS(make.trailing.lessThanOrEqualTo(self.mas_trailing).offset(-self.padding.right));
             }];
             if (_lastTag) {
                 if ([subview isKindOfClass:[TLTagButton class]]) {
-                    if (currentX + subview_width + self.padding.right > self.maxLayoutWidth) {
+                    if (currentX + subview_width + self.padding.right + 50 > self.maxLayoutWidth) {
                         [subview mas_makeConstraints:^(MASConstraintMaker *make) {
-                            ADDOBJ(make.leading.equalTo(self.mas_leading).offset(self.padding.left));
-                            ADDOBJ(make.top.equalTo(_lastTag.mas_bottom).offset(self.lineSpacing));
+                            SMAS(make.leading.equalTo(self.mas_leading).offset(self.padding.left));
+                            SMAS(make.top.equalTo(_lastTag.mas_bottom).offset(self.lineSpacing));
                         }];
                         currentX = self.padding.left + subview_width;
                     }else{
                         [subview mas_makeConstraints:^(MASConstraintMaker *make) {
-                            ADDOBJ(make.leading.equalTo(_lastTag.mas_trailing).offset(self.itemSpacing));
-                            ADDOBJ(make.centerY.equalTo(_lastTag.mas_centerY).offset(0));
-                            ADDOBJ(make.width.mas_equalTo(subview_width));
+                            SMAS(make.leading.equalTo(_lastTag.mas_trailing).offset(self.itemSpacing));
+                            SMAS(make.centerY.equalTo(_lastTag.mas_centerY).offset(0));
                         }];
                         currentX += subview_width;
                     }
                 }else{
                     [self.inputTagTextField mas_makeConstraints:^(MASConstraintMaker *make) {
-                        ADDOBJ(make.centerY.equalTo([self lastTag].mas_centerY).offset(0));
-                        ADDOBJ(make.left.equalTo([self lastTag].mas_right).offset(self.itemSpacing));
-                        ADDOBJ(make.bottom.equalTo(self.mas_bottom).with.offset(-self.padding.bottom));
-                        ADDOBJ(make.height.mas_equalTo([self lastTag].intrinsicContentSize.height));
+                        SMAS(make.centerY.equalTo([self lastTag].mas_centerY).offset(0));
+                        SMAS(make.left.equalTo([self lastTag].mas_right).offset(self.itemSpacing));
+                        SMAS(make.bottom.equalTo(self.mas_bottom).with.offset(-self.padding.bottom));
+                        SMAS(make.size.mas_lessThanOrEqualTo(self.maxLayoutWidth - currentX - [self lastTag].intrinsicContentSize.width));
+                        SMAS(make.height.mas_equalTo(21));
                     }];
-
-//                    if (_needBreakLine) {
-//                        [self.inputTagTextField mas_makeConstraints:^(MASConstraintMaker *make) {
-//                            ADDOBJ(make.top.equalTo(_lastTag.mas_bottom).offset(self.lineSpacing));
-//                            ADDOBJ(make.leading.equalTo(self.mas_leading).offset(self.padding.left));
-//                            ADDOBJ(make.bottom.lessThanOrEqualTo(self.mas_bottom).with.offset(-self.padding.bottom));
-//                        }];
-//                    }else{
-//                        [self.inputTagTextField mas_makeConstraints:^(MASConstraintMaker *make) {
-//                            ADDOBJ(make.centerY.equalTo([self lastTag].mas_centerY).offset(0));
-//                            ADDOBJ(make.leading.equalTo([self lastTag].mas_trailing).offset(self.itemSpacing));
-//                            ADDOBJ(make.bottom.lessThanOrEqualTo(self.mas_bottom).with.offset(-self.padding.bottom));
-//                        }];
-//                    }
                 }
             }else{
                 if ([subview isKindOfClass:[TLTagButton class]]) {
                     [subview mas_makeConstraints:^(MASConstraintMaker *make) {
-                        ADDOBJ(make.leading.equalTo(self.mas_leading).offset(self.padding.left));
-                        ADDOBJ(make.top.equalTo(self.mas_top).offset(self.padding.top));
-                        ADDOBJ(make.width.mas_equalTo(subview_width));
+                        SMAS(make.leading.equalTo(self.mas_leading).offset(self.padding.left));
+                        SMAS(make.top.equalTo(self.mas_top).offset(self.padding.top));
+                        SMAS(make.width.mas_equalTo(subview_width));
                     }];
                     currentX += subview_width;
                 }else{
                     [subview mas_makeConstraints:^(MASConstraintMaker *make) {
-                        ADDOBJ(make.leading.equalTo(self.mas_leading).offset(self.padding.left));
-                        ADDOBJ(make.top.equalTo(self.mas_top).offset(self.padding.top));
-                        ADDOBJ(make.bottom.equalTo(self.mas_bottom).offset(-self.padding.bottom));
+                        SMAS(make.leading.equalTo(self.mas_leading).offset(self.padding.left));
+                        SMAS(make.top.equalTo(self.mas_top).offset(self.padding.top));
+                        SMAS(make.bottom.equalTo(self.mas_bottom).offset(-self.padding.bottom));
                     }];
                 }
                 _lastTag = subview;
@@ -231,7 +215,7 @@
     }
     
     [_lastTag mas_makeConstraints:^(MASConstraintMaker *make) {
-        ADDOBJ(make.bottom.equalTo(self.mas_bottom).offset(-self.padding.bottom));
+        SMAS(make.bottom.equalTo(self.mas_bottom).offset(-self.padding.bottom));
     }];
     
     _inputTextFieldWidth = self.maxLayoutWidth - currentX - self.itemSpacing;
@@ -255,21 +239,27 @@
 }
 -(void)addTag:(TLTag *)tag{
     TLTagButton *btn = [TLTagButton buttonWithTag:tag];
+    [btn addTarget:self action:@selector(didClickTag:) forControlEvents:UIControlEventTouchUpInside];
     [self addSubview:btn];
     
     _isDidSetup = NO;
     [self invalidateIntrinsicContentSize];
     
-    btn.didClick = ^(TLTagButton *btn){
-        
-    };
 }
 -(void)insertTag:(TLTag *)tag{
     TLTagButton *btn = [TLTagButton buttonWithTag:tag];
+    [btn addTarget:self action:@selector(didClickTag:) forControlEvents:UIControlEventTouchUpInside];
     [self insertSubview:btn belowSubview:self.inputTagTextField];
     
     _isDidSetup = NO;
     [self invalidateIntrinsicContentSize];
+}
+-(void)didClickTag:(TLTagButton *)sender{
+    [self resetSelected];
+    sender.selected = YES;
+    _selectedTag = sender;
+    sender.backgroundColor = sender.selected ? sender.tlTag.tagBackgroundSelectedColor : sender.tlTag.tagBackgroundNormalColor;
+    [self.inputTagTextField becomeFirstResponder];
 }
 -(void)deleteTag{
     if ([self.inputTagTextField.text isEqualToString:@""]) {
@@ -279,6 +269,7 @@
         }else{
             TLTagButton *lastTag = (TLTagButton *)[self lastTag];
             lastTag.selected = YES;
+            lastTag.backgroundColor = lastTag.tlTag.tagBackgroundSelectedColor;
             _selectedTag = lastTag;
         }
         
@@ -298,9 +289,12 @@
         __weak typeof(self)weakSelf = self;
         _inputTagTextField = [[TLTextField alloc] init];
         _inputTagTextField.bounds = CGRectMake(0, 0, 100, 30);
+        _inputTagTextField.font = [UIFont systemFontOfSize:14];
         //return键 get
         _inputTagTextField.didReturn = ^(NSString *text){
-            [weakSelf insertTag:[TLTag tag:text]];
+            if (![text isEqualToString:@""]) {
+                [weakSelf insertTag:[TLTag tag:text]];
+            }
         };
         //退格键 get
         _inputTagTextField.didEnterBlank = ^(NSString *edittingText,NSString *text){
@@ -311,7 +305,6 @@
             [weakSelf resetSelected];
             _isDidSetup = NO;
             [weakSelf invalidateIntrinsicContentSize];
-//            [weakSelf layoutTextField];
         };
         _inputTagTextField.backward = ^(){
             [weakSelf deleteTag];
@@ -319,19 +312,29 @@
     }
     return _inputTagTextField;
 }
+-(NSArray *)getAllTagByText:(BOOL)byText{
+    NSMutableArray *allTags = [NSMutableArray array];
+    for (UIView *view in self.subviews) {
+        if ([view isKindOfClass:[TLTagButton class]]) {
+            if (byText) {
+                [allTags addObject:((TLTagButton *)view).tlTag.tag];
+            }else{
+                [allTags addObject:((TLTagButton *)view).tlTag];
+            }
+        }
+    }
+    return [allTags copy];
+}
 -(void)resetSelected{
     for (UIView *view in self.subviews) {
         if ([view isKindOfClass:[TLTagButton class]]) {
-            ((TLTagButton *)view).selected = NO;
+            TLTagButton *tag = (TLTagButton *)view;
+            tag.selected = NO;
+            tag.backgroundColor = tag.tlTag.tagBackgroundNormalColor;
         }
     }
+    _selectedTag = nil;
 }
-//-(void)layoutTextField{
-//    TLTextField *tf = self.inputTagTextField;
-//    _inputTextWidth = [tf.text boundingRectWithSize:CGSizeMake(CGFLOAT_MAX, tf.bounds.size.height) options:NSStringDrawingUsesFontLeading attributes:@{NSFontAttributeName:tf.font} context:nil].size.width;
-//    
-//    _needBreakLine = _inputTextWidth > _inputTextFieldWidth;
-//}
 -(NSMutableArray *)tagConstraints{
     if (!_tagConstraints) {
         _tagConstraints = [NSMutableArray array];
