@@ -71,7 +71,7 @@
     
     UIView *_lastTag;
     
-    UIView *_selectedTag;
+    TLTagButton *_selectedTag;
     
     CGFloat _inputTextWidth;
     CGFloat _inputTextFieldWidth;
@@ -84,7 +84,7 @@
     if (self = [super init]) {
         _block = block;
         _type = type;
-        self.tagArray = [tags mutableCopy];
+        self.tagArray = tags ? [tags mutableCopy] : [NSMutableArray array];
         for (TLTag *tag in self.tagArray) {
             [self addTag:tag];
         }
@@ -109,6 +109,7 @@
         for (UIView *subview in self.subviews) {
             CGFloat subview_width = subview.intrinsicContentSize.width;
             CGFloat subview_height = subview.intrinsicContentSize.height;
+            //            if ([subview isKindOfClass:[TLTagButton class]]) {
             if (lastView) {
                 if (self.padding.left + subview_width >= self.maxLayoutWidth) {
                     lineCount ++ ;
@@ -123,6 +124,7 @@
                 currentX += subview_width;
             }
             lastView = subview;
+            //            }
         }
         totalHeight += self.padding.bottom + (lineCount - 1) * self.lineSpacing;
         totalWidth = (lineCount >= 1) ? self.maxLayoutWidth : MIN(self.maxLayoutWidth, totalWidth);
@@ -236,18 +238,25 @@
     TLTagButton *btn = [TLTagButton buttonWithTag:tag];
     [btn addTarget:self action:@selector(didClickTag:) forControlEvents:UIControlEventTouchUpInside];
     [self addSubview:btn];
+    [self.tagArray addObject:tag];
     
     _isDidSetup = NO;
     [self invalidateIntrinsicContentSize];
     
 }
 -(void)insertTag:(TLTag *)tag{
-    TLTagButton *btn = [TLTagButton buttonWithTag:tag];
-    [btn addTarget:self action:@selector(didClickTag:) forControlEvents:UIControlEventTouchUpInside];
-    [self insertSubview:btn belowSubview:self.inputTagTextField];
-    
-    _isDidSetup = NO;
-    [self invalidateIntrinsicContentSize];
+    if (self.tagArray.count < self.maxTagCount) {
+        TLTagButton *btn = [TLTagButton buttonWithTag:tag];
+        [btn addTarget:self action:@selector(didClickTag:) forControlEvents:UIControlEventTouchUpInside];
+        [self insertSubview:btn belowSubview:self.inputTagTextField];
+        [self.tagArray addObject:tag];
+        self.inputTagTextField.text = @"";
+        
+        _isDidSetup = NO;
+        [self invalidateIntrinsicContentSize];
+    }else{
+        if (self.tagMax) self.tagMax();
+    }
 }
 -(void)didClickTag:(TLTagButton *)sender{
     [self resetSelected];
@@ -259,6 +268,7 @@
 -(void)deleteTag{
     if ([self.inputTagTextField.text isEqualToString:@""]) {
         if (_selectedTag) {
+            [self.tagArray removeObject:_selectedTag.tlTag];
             [_selectedTag removeFromSuperview];
             _selectedTag = nil;
         }else{
@@ -285,6 +295,7 @@
         _inputTagTextField = [[TLTextField alloc] init];
         _inputTagTextField.bounds = CGRectMake(0, 0, 100, 30);
         _inputTagTextField.font = [UIFont systemFontOfSize:14];
+        
         [_inputTagTextField setContentHuggingPriority:UILayoutPriorityRequired
                                               forAxis:UILayoutConstraintAxisHorizontal];
         [_inputTagTextField setContentCompressionResistancePriority:UILayoutPriorityDefaultLow
@@ -297,7 +308,9 @@
         };
         //退格键 get
         _inputTagTextField.didEnterBlank = ^(NSString *edittingText,NSString *text){
-            
+            if ([edittingText isEqualToString:@" "]) {
+                [weakSelf insertTag:[TLTag tag:[text stringByReplacingOccurrencesOfString:@" " withString:@""]]];
+            }
         };
         //正在输入 get
         _inputTagTextField.didEditing = ^(){
@@ -308,6 +321,7 @@
         _inputTagTextField.backward = ^(){
             [weakSelf deleteTag];
         };
+        
     }
     return _inputTagTextField;
 }
@@ -317,14 +331,14 @@
         [self insertTag:[TLTag tag:tfText]];
         self.inputTagTextField.text = @"";
     }
+    
     NSMutableArray *allTags = [NSMutableArray array];
-    for (UIView *view in self.subviews) {
-        if ([view isKindOfClass:[TLTagButton class]]) {
-            if (byText) {
-                [allTags addObject:((TLTagButton *)view).tlTag.tag];
-            }else{
-                [allTags addObject:((TLTagButton *)view).tlTag];
-            }
+    
+    for (TLTag *tag in self.tagArray) {
+        if (byText) {
+            [allTags addObject:tag.tag];
+        }else{
+            [allTags addObject:tag];
         }
     }
     return [allTags copy];

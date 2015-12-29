@@ -44,11 +44,16 @@ typedef void(^DidClickTag)(NSUInteger );
 @end
 
 @interface TLTagView : UIView
+//边距
 @property(nonatomic,assign)UIEdgeInsets padding;
 @property(nonatomic,assign)CGFloat lineSpacing;
 @property(nonatomic,assign)CGFloat itemSpacing;
 @property(nonatomic,assign)CGFloat maxLayoutWidth;
 @property(nonatomic,strong)TLTextField *inputTagTextField;
+//限制输入Tag数
+@property(nonatomic,assign)NSUInteger maxTagCount;
+//超过Tag最大限制后的回调
+@property(nonatomic,copy)void (^tagMax)();
 
 @property(nonatomic,assign)BOOL canEdit;
 
